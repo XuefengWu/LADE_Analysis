@@ -2,14 +2,18 @@
 **/*.class
 **/target
 **/bin
+**/build
+**/classes
 
 # Log file
 **/*.log
- 
+**/logs
+
 #IDEA
 **/*.iml
 **/*.ipr
 **/*.iws
+**/.idea
 
 #Eclipse
 **/.classpath
@@ -18,5 +22,14 @@
 **/.vscode
 
 **/.DS_Store
+
+#gradle
+**/.gradle
+**/gradle
+
+**/.g8
+**/*_extends.sh
+
+**/prod.conf
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
