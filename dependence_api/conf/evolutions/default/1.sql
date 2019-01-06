@@ -15,7 +15,7 @@ CREATE TABLE `JClass` (
 CREATE TABLE `JField` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `name` char(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `type` char(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` char(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `updatedAt` datetime(3) NOT NULL,
   `createdAt` datetime(3) NOT NULL,
   PRIMARY KEY (`id`),

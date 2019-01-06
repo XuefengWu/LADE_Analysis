@@ -117,6 +117,7 @@ public class JdbiBatch implements IBatch {
         long start = System.currentTimeMillis();
         int totalInsert = 0;
         Handle handle = dbi.open();
+        handle.execute("SET FOREIGN_KEY_CHECKS = 0");
         Batch batch = handle.createBatch();
 
         String[] tables = new String[]{"JClass", "JField", "JMethod",
@@ -137,6 +138,7 @@ public class JdbiBatch implements IBatch {
         insertStore.clear();
 
         batch.execute();
+        handle.execute("SET FOREIGN_KEY_CHECKS = 1");
         dbi.close(handle);
 
         long stop = System.currentTimeMillis();

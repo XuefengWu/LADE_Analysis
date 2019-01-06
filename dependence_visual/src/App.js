@@ -11,9 +11,8 @@ import ClassDependences from './ClassDependences.jsx'
 import { BrowserRouter as Router, Route } from 'react-router-dom'
 
 class App extends Component {
-  render() {
-    //const root = "http://10.127.151.14:8900"
-    const rootUrl = "http://localhost:9000"
+  render() { 
+    const rootUrl = "http://localhost:8900"
     return (
       <div className="App"> 
       <Router>

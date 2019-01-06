@@ -1,7 +1,7 @@
-VERSION="v0.7.0"
+VERSION="latest"
 echo $VERSION
 
-gradle clean playBinary idea dist
+gradlew clean playBinary idea dist
 
 docker build -t dependence_api .
 

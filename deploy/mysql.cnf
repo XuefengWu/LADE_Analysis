@@ -1,0 +1,23 @@
+[mysqld]
+skip-log-bin
+skip-external-locking
+skip-innodb_doublewrite
+
+innodb_thread_concurrency = 4
+innodb_change_buffering=all
+innodb_change_buffer_max_size=50
+innodb_buffer_pool_size=2048M
+innodb_write_io_threads = 8
+innodb_buffer_pool_instances = 4
+
+innodb_flush_log_at_trx_commit=2
+
+innodb_flush_method = O_DIRECT
+innodb_doublewrite = 0
+innodb_support_xa = 0
+innodb_checksums = 0
+
+general_log = 0
+slow_query_log = 0
+
+

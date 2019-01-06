@@ -9,7 +9,24 @@ services:
       MYSQL_ROOT_PASSWORD: prisma
       MYSQL_DATABASE: default@default
     volumes:
-      - mysql:/var/lib/mysql
+      - mysql:/var/lib/mysql 
+
+  dependence_api:
+    image: dependence_api     
+    depends_on:
+      - mysql  
+    links:
+      - "mysql:dependence_mysql"
+    ports:            
+      - "8900:9000"  
+
+  dependence_visual:
+    image: dependence_visual    
+    depends_on:
+      - dependence_api   
+    ports:            
+      - "8300:80"  
+
 volumes:
   mysql:
 
