@@ -33,3 +33,16 @@ after about 30 minitues you can visit
 http://localhost:8300/method/org.springframework.web.reactive.DispatcherHandler/handle/invokes
 
 and should find something.
+
+# features
+- module to module method relations 
+    /method_method/spring-webflux_spring-web_invokes
+- class dependence
+    /class/org.springframework.web.reactive.DispatcherHandler/dependences
+- method invokes
+    /method/org.springframework.web.reactive.DispatcherHandler/handle/invokes
+
+- mark node color
+    right now need insert configure into database
+    INSERT INTO Configure VALUES  ("8cd92f65-3083-4c0c-9506-55f1716d5127","nodecolor","server","#d3d7e8","2019-01-05 11:30:09","2019-01-05 11:30:09");
+    INSERT INTO Configure VALUES  ("8cd92f65-3083-4c0c-9506-55f1716d5129","nodecolor","reactive","#40e0d0","2019-01-05 11:30:09","2019-01-05 11:30:09");
