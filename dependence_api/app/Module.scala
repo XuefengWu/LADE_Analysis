@@ -1,6 +1,6 @@
 import com.google.inject.AbstractModule
-import domain.Repository
-import infrostracture.RepoSlickImpl
+import jv.domain.Repository
+import jv.infrostracture.RepoSlickImpl
 
 
 class Module extends AbstractModule {

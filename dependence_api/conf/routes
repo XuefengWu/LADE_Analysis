@@ -4,20 +4,20 @@
 # ~~~~
 
 # An example controller showing a sample home page
-GET     /method_method/:aTarget/:bTarget                     controllers.HomeController.getTargetAMethodInvokeTargetBMethod(aTarget:String,bTarget:String)
+GET     /method_method/:aTarget/:bTarget                     jv.controllers.HomeController.getTargetAMethodInvokeTargetBMethod(aTarget:String,bTarget:String)
 
-GET     /method/:clz/:name/callees                           controllers.HomeController.getMethodCallees(clz:String,name:String)
+GET     /method/:clz/:name/callees                           jv.controllers.HomeController.getMethodCallees(clz:String,name:String)
 
-GET     /method/:clz/:name/callers                           controllers.HomeController.getMethodCallers(clz:String,name:String)
+GET     /method/:clz/:name/callers                           jv.controllers.HomeController.getMethodCallers(clz:String,name:String)
 
-GET     /method/:clz/:name/invokes/callers/:deep             controllers.HomeController.getMethodInvokesCallerDeep(clz:String,name:String,deep:Int)
+GET     /method/:clz/:name/invokes/callers/:deep             jv.controllers.HomeController.getMethodInvokesCallerDeep(clz:String,name:String,deep:Int)
 
-GET     /method/:clz/:name/invokes                           controllers.HomeController.getMethodInvokes(clz:String,name:String)
+GET     /method/:clz/:name/invokes                           jv.controllers.HomeController.getMethodInvokes(clz:String,name:String)
 
-GET     /class/:name/dependences                             controllers.HomeController.getClassDependences(name:String)
+GET     /class/:name/dependences                             jv.controllers.HomeController.getClassDependences(name:String)
 
-GET     /class/:name/methods                                 controllers.HomeController.getClassMethods(name:String)
+GET     /class/:name/methods                                 jv.controllers.HomeController.getClassMethods(name:String)
 
-GET     /classes                                              controllers.HomeController.getAllClasses()
+GET     /classes                                              jv.controllers.HomeController.getAllClasses()
 
-DELETE  /cache                                                controllers.HomeController.deleteCache()
+DELETE  /cache                                                jv.controllers.HomeController.deleteCache()
