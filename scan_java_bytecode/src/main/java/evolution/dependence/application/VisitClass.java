@@ -37,7 +37,6 @@ public class VisitClass {
             FixClassDuplicate.main(new String[]{});
             FixMethodDuplicate.main(new String[]{});
             FixClassModule.main(args);
-            FixMethodModule.main(new String[]{});
         } finally {
             long finished = System.currentTimeMillis();
             System.out.println(String.format("total:%d,spend:%d", visitor.getCount(),(finished - start) / 1000));
