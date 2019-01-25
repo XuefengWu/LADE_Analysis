@@ -1,7 +1,9 @@
 VERSION="latest"
 echo $VERSION
 
-gradlew clean playBinary idea dist
+gradle wrapper
+
+./gradlew clean playBinary idea dist
 
 docker build -t dependence_api .
 
