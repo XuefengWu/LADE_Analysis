@@ -97,8 +97,9 @@ public class FixMethodDuplicate {
         }
 
         public void deleteAll(String table) {
-            String sql = String.format("DELETE FROM `default@default`.`%s`",table);
+            String sql = String.format("TRUNCATE TABLE `default@default`.`%s`",table);
             Handle handle = dbi.open();
+            handle.execute("SET FOREIGN_KEY_CHECKS = 0");
             handle.execute(sql);
             handle.close();
         }

@@ -1,5 +1,5 @@
 cd ..
-mkdir demo
+mkdir -p demo
 cd demo
 if [ ! -f spring-framework.zip ]; then
     wget https://github.com/spring-projects/spring-framework/archive/master.zip
