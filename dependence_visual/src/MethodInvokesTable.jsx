@@ -1,4 +1,5 @@
-import React, {Component} from 'react'
+import React, {Component} from 'react' 
+
 import Table from 'react-bootstrap/lib/Table';
 import Badge from 'react-bootstrap/lib/Badge';
 
@@ -17,11 +18,51 @@ class MethodInvokesTable extends Component {
         //this.createCloud()
     }
 
+    filterData(data,search,side) {
+        
+        if(search && search.length >0){            
+            if(!side){
+                side = "callee"
+            } 
+            const re = new RegExp(search)            
+            var filted = []
+            switch (side) {
+                case "callee": {
+                    filted = data.filter(function(v){return v.calleeClass.indexOf(search) !== -1})
+                    break
+                }
+                case "caller": {
+                    filted = data.filter(function(v){return v.callerClass.indexOf(search) !== -1})
+                    break
+                }
+                case "callee_regexp":
+                    filted = data.filter(function(v){return re.test(v.calleeClass)})
+                    console.log(filted.length)
+                    break
+                case "caller_regexp":
+                    filted = data.filter(function(v){return re.test(v.callerClass)})
+                    break
+                default: {
+                    filted = data.filter(function(v){return re.test(v.callerClass) || re.test(v.calleeClass)})
+                    if(filted || filted.length < 1) {
+                        filted = data.filter(function(v){return v.callerClass.indexOf(search) !== -1 || v.calleeClass.indexOf(search) !== -1})
+                    } 
+                    break
+                }    
+            } 
+
+            return filted            
+        } else {
+            return data
+        }
+    }
+
     createCloud() { 
-        var self = this
+        const self = this
         
         const relation = self.props.match.params.relation
         const search = self.props.match.params.search
+        
         console.log(relation)
         
         const root = self.props.root
@@ -32,13 +73,13 @@ class MethodInvokesTable extends Component {
         .then(response => response.json())
         .then(data => {
             console.log(search)
-            if(search && search.length >0){
-                return self.setState({ data:data.filter(function(v){
-                    return v.calleeClass.indexOf(search) !== -1 || v.callerClass.indexOf(search) !== -1})
-                })
+            const side = self.props.match.params.side
+            const founded = self.filterData(data,search,side)
+            if(!founded || founded.length < 1) {
+                document.getElementById('loading').innerHTML = "Can not match anything for: <b>"+search+"</b>"
             } else {
-                return self.setState({ data:data})
-            }   
+                self.setState({data: founded})               
+            } 
         })         
         .catch(error => console.error(error)) 
     }
@@ -73,7 +114,7 @@ class MethodInvokesTable extends Component {
         </tbody>
       </Table></div>
       } else {
-        return <div>Loading...</div>
+        return <div id="loading">Loading...</div>
       }
     }
 }

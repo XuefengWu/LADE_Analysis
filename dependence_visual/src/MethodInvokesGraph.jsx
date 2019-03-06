@@ -2,6 +2,7 @@ import React, {Component} from 'react'
 import './MethodInvokesGraph.css'
 import * as dagreD3 from 'dagre-d3'
 import * as d3 from 'd3'
+//import * as qs from 'query-string';
 
 class MethodInvokesGraph extends Component {
     constructor(props) {
@@ -23,43 +24,59 @@ class MethodInvokesGraph extends Component {
         const name = self.props.match.params.name
         const invokeAction = self.props.match.params.invoke
         const callerDeep = self.props.match.params.callerdeep        
-        var url = self.props.root + '/method/'+clz+'/'+name+'/' + invokeAction
-        
+        var url = self.props.root + self.props.api +clz+'/' + invokeAction
+        if(name) {
+            url = self.props.root + self.props.api +clz+'/'+name+'/' + invokeAction
+        }
         if(callerDeep){
             url = url + '/callers/' + callerDeep
-        }                
-        console.log(url)
-        fetch(url)
-        .then(response => response.json())
+        }                 
+        //const parsed = qs.parse(self.props.location.search);
+        //console.log(parsed);
+
+        fetch(url+self.props.location.search)
+        .then(response => {
+            console.log(response)
+            if(response.ok){
+                document.getElementById('loading').innerHTML = "<div></div>"
+                return response.json()
+            } else {
+                document.getElementById('loading').innerHTML = "<div>"+response.status+":"+response.statusText+"</div>"
+                return {nodes:[]}
+            }           
+        })
         .then(data => self.drawGraph(data,clz+"."+name))
         .catch(error => console.error(error))
         
     }
 
-    nodeLabel(n) {     
+    nodeLabel(n) {        
         var properties = Object.assign({}, n.properties, {})
-        delete properties.color      
-        return JSON.stringify(properties)+"\n"+n.title              
+        delete properties.color       
+        if(properties && !(Object.keys(properties).length === 0 && properties.constructor === Object)) {            
+            return JSON.stringify(properties)+"\n"+n.title              
+        } else {
+            return n.title              
+        }        
     }
 
     nodeStyle(n,title){
         if(n.properties.length > 0 && n.properties.parents) {            
             return "fill: #afa"            
         }  
-        if(n.title.indexOf(title) !== -1) {
+        if(title.indexOf(n.title) !== -1) {
             return "fill: yellow" 
         } 
-        if(n.properties.color) {
-            console.log(n.properties.color)
+        if(n.properties.color) {            
             return 'fill: ' + n.properties.color
         }              
     }
 
-    nodeShape(v,title){          
-        if(v.properties.length > 0 && v.properties.parents) {            
+    nodeShape(n,title){          
+        if(n.properties.length > 0 && n.properties.parents) {            
             return "ellipse"            
         }  
-        if(v.title.indexOf(title) !== -1) {
+        if(title.indexOf(n.title) !== -1) {
             return "diamond"
         } else {
             return "rect"           
@@ -92,6 +109,33 @@ class MethodInvokesGraph extends Component {
             } 
         } 
     }
+
+    openNewWindows(nodeLabel) {  
+        const pathname = this.props.location.pathname
+        const search = this.props.location.search       
+        
+        var clz = "";
+        var m = "";
+        var fullMethod = nodeLabel;
+        
+        if(nodeLabel.indexOf("\n") > 0){            
+            fullMethod = nodeLabel.split("\n")[1];
+        } 
+        const l = pathname.substring(1) 
+        const rootPath = l.substr(0,l.indexOf("/"))
+        const resouceRelation = pathname.substr(pathname.lastIndexOf("/")+1)
+        if("class" === rootPath) {        
+            clz = nodeLabel             
+            window.open("/class/"+clz+"/"+resouceRelation+search);
+        } else {
+            console.log("rootPath:"+rootPath)
+            clz = fullMethod.substr(0,fullMethod.lastIndexOf("."))
+            m = fullMethod.substr(fullMethod.lastIndexOf(".")+1)
+            console.log(clz)
+            window.open("/method/"+clz+"/"+m+"/" + resouceRelation+search);    
+        }
+    }
+
     drawGraph(data,title) { 
         if(data.nodes.length === 0){
             return
@@ -121,8 +165,13 @@ class MethodInvokesGraph extends Component {
         
         g.nodes().forEach(function (v) {
             var node = g.node(v);
-            // Round the corners of the nodes
-            node.rx = node.ry = 5;
+            if(node === undefined) { 
+                console.log(v)
+                console.log("node is " + node)
+            } else {
+                // Round the corners of the nodes
+                node.rx = node.ry = 5;                
+            } 
         });
 
 
@@ -144,15 +193,18 @@ class MethodInvokesGraph extends Component {
 
           render(svgGroup, g);
          
-          svg.selectAll("g.node").on("click", function(id) { var _node = g.node(id); console.log("Clicked " + id,_node); });
+          svg.selectAll("g.node").on("click", function(id) { var _node = g.node(id); self.openNewWindows(_node.label); });
         
     }
 
     render() {
-        return <svg ref = {node => this.node = node}
+        return <div>
+                <div id="loading">Loading...</div>
+                <svg ref = {node => this.node = node}
                     width = {1800}
                     height = {1800}>
                 </svg>
+                </div>
     }
 }
 

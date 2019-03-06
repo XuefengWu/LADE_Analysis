@@ -8,8 +8,8 @@ trait ToGraphService {
   self: ApplicationService =>
   private val nodeColors: Map[String, String] = Await.result( repo.loadNodeColor(), Duration.Inf)
 
-  def appendColor(clz: String, properties: Map[String, Any]): Map[String, Any] = {
-    nodeColors.find(v => clz.contains(v._1)).map(v => properties + ("color" -> v._2)).getOrElse(properties)
+  def getNodeColorConfigure(clz: String): Map[String, Any] = {
+    nodeColors.find(v => clz.contains(v._1)).map(v => ("color" -> v._2)).toMap[String,String]
   }
 
 }
