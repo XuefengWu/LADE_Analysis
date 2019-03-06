@@ -10,7 +10,9 @@ import org.objectweb.asm.tree.*;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.ListIterator;
+import java.util.stream.Collectors;
 
 public class ClassPaser {
 
@@ -67,7 +69,7 @@ public class ClassPaser {
                 AbstractInsnNode inst = instIterator.next();
                 if (inst instanceof MethodInsnNode) {
                     MethodInsnNode methodInsn = (MethodInsnNode) inst;
-                    JMethod _m = new JMethod(methodInsn.name, methodInsn.owner);
+                    JMethod _m = new JMethod(methodInsn.name, refineMethodOwner(methodInsn.name,methodInsn.owner,classNode));
                     _m.setAccess(0x0001);
                     method.addCall(_m);
                 }
@@ -79,5 +81,18 @@ public class ClassPaser {
         long stop = System.currentTimeMillis();
         //System.out.println("parse " + path + " spend: " + (stop-start)/1000);
         return clz;
+    }
+
+    private String refineMethodOwner(String method, String owner,ClassNode classNode) {
+        if(classNode.name.equalsIgnoreCase(owner)) {
+            List<String> methodNameList = classNode.methods.stream().map(v -> v.name).collect(Collectors.toList());
+            if (methodNameList.contains(method)) {
+                return owner;
+            } else {
+                return classNode.superName;
+            }
+        } else {
+            return owner;
+        }
     }
 }
