@@ -13,36 +13,27 @@ import play.api.mvc._
 @Singleton
 class HomeController @Inject()(cc: ControllerComponents,service:ApplicationService) extends AbstractController(cc) {
 
-  implicit val propertiesWrites = new Writes[Map[String,Any]] {
-    def writes(properties: Map[String,Any]) = JsObject(
-      properties.map(v => (v._1,JsString(v._2.toString)))
-    )
-  }
-  implicit val nodeWrites: Writes[Node] = Json.writes[Node]
-  implicit val edgeWrites: Writes[Edge] = Json.writes[Edge]
-  implicit val graphWrites: Writes[Graph] = Json.writes[Graph]
-
+  import common.controllers.GraphJsonFormatter._
   implicit val simpleClassWrites: Writes[SimpleClass] = Json.writes[SimpleClass]
   implicit val simpleMethodWrites: Writes[SimpleMethod] = Json.writes[SimpleMethod]
-
+  implicit val packageTreemap = Json.writes[Treemap]
   implicit val vmethodInvoke: Writes[VMethodInvoke] = Json.writes[VMethodInvoke]
 
   def getMethodCallees(clz:String, name:String) = Action { implicit request: Request[AnyContent] =>
-    val g = service.findMethodCallees(clz,name)
+    val deep = request.getQueryString("deep").map(_.toInt)
+    val hide = request.getQueryString("hide").map(_.split(",").toSeq)
+    val g = service.findMethodCallees(clz,name,deep,hide)
     Ok(Json.toJson(g))
   }
 
   def getMethodCallers(clz:String, name:String) = Action { implicit request: Request[AnyContent] =>
-    val g = service.findMethodCallers(clz,name)
+    val deep = request.getQueryString("deep").map(_.toInt)
+    val g = service.findMethodCallers(clz,name,deep)
     Ok(Json.toJson(g))
   }
 
   def getMethodInvokes(clz:String, name:String) = Action { implicit request: Request[AnyContent] =>
-    val g = service.findMethodInvokes(clz,name)
-    Ok(Json.toJson(g))
-  }
-
-  def getMethodInvokesCallerDeep(clz:String, name:String,deep:Int) = Action { implicit request: Request[AnyContent] =>
+    val deep = request.getQueryString("deep").map(_.toInt)
     val g = service.findMethodInvokes(clz,name,deep)
     Ok(Json.toJson(g))
   }
@@ -54,6 +45,11 @@ class HomeController @Inject()(cc: ControllerComponents,service:ApplicationServi
 
   def getClassDependences(name:String) = Action { implicit request: Request[AnyContent] =>
     val g = service.findClassDependences(name,4)
+    Ok(Json.toJson(g))
+  }
+  def getClassInvokes(name:String) = Action { implicit request: Request[AnyContent] =>
+    val deep = request.getQueryString("deep").map(_.toInt)
+    val g = service.findClassInvokes(name,deep)
     Ok(Json.toJson(g))
   }
 
@@ -74,6 +70,11 @@ class HomeController @Inject()(cc: ControllerComponents,service:ApplicationServi
 
   def getTargetAMethodInvokeTargetBMethod(aTarget:String,bTarget:String) = Action { implicit request: Request[AnyContent] =>
     val g = service.findATargetInvokeBTarget(aTarget,bTarget)
+    Ok(Json.toJson(g))
+  }
+
+  def getPackageLocs()= Action { implicit request: Request[AnyContent] =>
+    val g = service.getPackageLocs()
     Ok(Json.toJson(g))
   }
 

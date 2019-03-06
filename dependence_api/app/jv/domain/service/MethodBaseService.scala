@@ -7,7 +7,7 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait MethodBaseService extends BaseDependenceService {
+trait MethodBaseService extends ConfigureService {
   self: ApplicationService =>
 
   protected def buildCallerSize(method:JMethod):JMethod = {

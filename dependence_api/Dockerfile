@@ -1,4 +1,4 @@
-FROM openjdk:8-jre-alpine
+FROM openjdk:11.0.2-jdk-slim-stretch
 
 WORKDIR workspace
 

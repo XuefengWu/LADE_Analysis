@@ -10,14 +10,24 @@ GET     /method/:clz/:name/callees                           jv.controllers.Home
 
 GET     /method/:clz/:name/callers                           jv.controllers.HomeController.getMethodCallers(clz:String,name:String)
 
-GET     /method/:clz/:name/invokes/callers/:deep             jv.controllers.HomeController.getMethodInvokesCallerDeep(clz:String,name:String,deep:Int)
-
 GET     /method/:clz/:name/invokes                           jv.controllers.HomeController.getMethodInvokes(clz:String,name:String)
 
 GET     /class/:name/dependences                             jv.controllers.HomeController.getClassDependences(name:String)
 
+GET     /class/:name/invokes                                 jv.controllers.HomeController.getClassInvokes(name:String)
+
 GET     /class/:name/methods                                 jv.controllers.HomeController.getClassMethods(name:String)
 
-GET     /classes                                              jv.controllers.HomeController.getAllClasses()
+GET     /classes                                             jv.controllers.HomeController.getAllClasses()
 
-DELETE  /cache                                                jv.controllers.HomeController.deleteCache()
+GET     /packages/loc                                        jv.controllers.HomeController.getPackageLocs()
+
+GET     /sqlaction/:clz/:method/invokes                      sql.controllers.HomeController.getSqlAction(clz:String,method:String)
+
+GET     /table/:name/writers                                 sql.controllers.HomeController.getTableWriters(name:String)
+
+GET     /table/plsql/:name/operators                          sql.controllers.HomeController.getTablePlSqlOperators(name:String)
+
+GET     /table/java/:name/operators                           sql.controllers.HomeController.getTableJavaOperators(name:String)
+
+DELETE  /cache                                               jv.controllers.HomeController.deleteCache()

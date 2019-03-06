@@ -6,15 +6,17 @@ import slick.jdbc.MySQLProfile.api._
 import slick.lifted.ProvenShape
 
 
-class JMethods(tag: Tag) extends Table[(String, String, String)](tag, "JMethod") {
+class JMethods(tag: Tag) extends Table[(String, String, String, Option[String])](tag, "JMethod") {
   def id = column[String]("id")
 
   def name = column[String]("name")
 
   def clzname = column[String]("clzname")
 
+  def module = column[Option[String]]("module")
+
   // Every table needs a * projection with the same type as the table's type parameter
-  def * :ProvenShape[(String, String, String)]  = (id, clzname, name)
+  def * :ProvenShape[(String, String, String, Option[String])]  = (id, clzname, name,module)
 
   private val methodCallees = TableQuery[JMethodCallees]
   private val methods = TableQuery[JMethods]
@@ -22,7 +24,7 @@ class JMethods(tag: Tag) extends Table[(String, String, String)](tag, "JMethod")
   private val classParent = TableQuery[JClassParent]
   private val classMethods = TableQuery[ClassMethods]
 
-  def callees = methodCallees.filter(_.a === id).flatMap(v=>methods.filter(_.id === v.b))
+  def callees(hiddens: Seq[String]) = methodCallees.filter(_.a === id).flatMap(v=>methods.filter(m => m.id === v.b && (!( m.module inSet hiddens) ||  m.module.isEmpty)))
   def callers = methodCallees.filter(_.b === id).flatMap(v=>methods.filter(_.id === v.a))
   def callersRelations = methodCallees.filter(_.b === id)
 
@@ -66,14 +68,15 @@ class JClassParent(tag: Tag) extends Table[(String, String)](tag, "_ClassParent"
 
 }
 
-class JClasses(tag: Tag) extends Table[(String, String, Option[String])](tag, "JClass") {
+class JClasses(tag: Tag) extends Table[(String, String, Option[String], Option[Int])](tag, "JClass") {
 
   def id = column[String]("id")
   def name = column[String]("name")
   def module = column[Option[String]]("module")
+  def loc = column[Option[Int]]("loc")
 
   // Every table needs a * projection with the same type as the table's type parameter
-  def * :ProvenShape[(String, String, Option[String])]  = (id,name,module)
+  def * :ProvenShape[(String, String, Option[String], Option[Int])]  = (id,name,module,loc)
 
 
   private val classParent = TableQuery[JClassParent]

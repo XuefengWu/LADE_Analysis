@@ -1,20 +1,21 @@
 package jv.domain.service
 
-import jv.domain.dto.{Edge, Graph, Node}
+import common.domain.{Edge, Graph, Node}
 import jv.domain.model.JMethod
 
-trait MethodToGraphService extends ToGraphService{
+trait MethodToGraphService extends ConfigureService{
   self: ApplicationService =>
 
-  protected def methodToGraph(ms: Seq[JMethod]):Graph = {
-    val parents: Seq[JMethod] = ms.map(_.parent).filter(_.isDefined).map(_.get)
 
+  def methodToGraph(ms: Seq[JMethod]):Graph = {
+    val parents: Seq[JMethod] = ms.map(_.parent).filter(_.isDefined).map(_.get)
     ms.foldLeft(Graph()){(z,method) => {
       val callees = method.callees
       val calleesEdges = callees.map(callee => m2e(method,callee))
       val callers = method.callers
       val callerEdges = callers.map(caller => m2e(caller,method))
-      z.copy(nodes = z.nodes :+ m2n(method,callees,parents),edges = z.edges ++ calleesEdges ++ callerEdges)
+      val edgeSeq = (z.edges ++ calleesEdges ++ callerEdges).filterNot(v => v.a == v.b)
+      z.copy(nodes = z.nodes :+ m2n(method,callees,parents),edges = edgeSeq)
     }}
   }
 
@@ -32,13 +33,14 @@ trait MethodToGraphService extends ToGraphService{
     if(isParent) {
       properties + ("parent"->true)
     }
-    appendColor(m.clz,properties)
+    properties ++ getNodeColorConfigure(m.clz)
   }
 
   private def m2e(a:JMethod, b:JMethod):Edge={
     if(b.parent.isDefined && b.parent.get.id.equalsIgnoreCase(a.id)) {
       Edge(a.id,b.id,List("parent"))
-    } else {
+    }
+    else {
       Edge(a.id,b.id)
     }
   }

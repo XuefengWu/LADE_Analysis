@@ -5,7 +5,7 @@ import jv.domain.model.JClass
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait ClassDependenceesService extends BaseDependenceService {
+trait ClassDependenceesService extends ConfigureService {
   self: ApplicationService =>
 
   def findClassDependencees(name:String, deep: Int): Future[Seq[JClass]] = {

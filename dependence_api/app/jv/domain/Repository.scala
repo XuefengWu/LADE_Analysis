@@ -1,18 +1,18 @@
 package jv.domain
 
 import jv.domain.dto.VMethodInvoke
-import jv.domain.model.{JClass, JMethod}
+import jv.domain.model.{ClassCallee, JClass, JMethod, NodeConfigure}
 
 import scala.concurrent.Future
 
 
 trait Repository {
 
-  def findMethodCallees(id:String):Future[Seq[JMethod]]
+  def findMethodCallees(id:String,hiddens:Seq[String]):Future[Seq[JMethod]]
 
   def findInterfaceMethod(id:String):Future[Option[JMethod]]
 
-  def findImplementMethod(id:String):Future[Option[JMethod]]
+  def findImplementMethod(id:String):Future[Seq[JMethod]]
 
   def findMethodCallers(id:String):Future[Seq[JMethod]]
 
@@ -36,6 +36,14 @@ trait Repository {
 
   def isViewExist(view: String):Future[Boolean]
 
-  def loadNodeColor():Future[Map[String,String]]
+  def loadNodeConfigures():Future[Seq[NodeConfigure]]
+
+  def findClassCallees(clz:String):Future[Seq[ClassCallee]]
+
+  def findClassCallers(clz:String):Future[Seq[ClassCallee]]
+
+  def findClassParent(clz:String):Future[Seq[ClassCallee]]
+
+  def findClassImplements(clz:String):Future[Seq[ClassCallee]]
 
 }

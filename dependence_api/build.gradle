@@ -3,9 +3,9 @@ plugins {
     id 'idea'
 }
 
-def playVersion = "2.6.20"
+def playVersion = "2.6.21"
 def playSlickVersion = "3.0.3"
-def slickVersion = "3.2.3"
+def slickVersion = "3.3.0"
 def scalaVersion = System.getProperty("scala.binary.version", /* default = */ "2.12")
 
 model {

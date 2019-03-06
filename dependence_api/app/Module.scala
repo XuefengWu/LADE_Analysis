@@ -1,10 +1,10 @@
 import com.google.inject.AbstractModule
-import jv.domain.Repository
-import jv.infrostracture.RepoSlickImpl
-
 
 class Module extends AbstractModule {
   override protected def configure(): Unit = {
-    bind(classOf[Repository]).to(classOf[RepoSlickImpl])
+    bind(classOf[jv.domain.Repository]).to(classOf[jv.infrostracture.RepoSlickImpl])
+
+    bind(classOf[sql.domain.Repository]).to(classOf[sql.infrostracture.RepoSlickImpl])
+
   }
 }
