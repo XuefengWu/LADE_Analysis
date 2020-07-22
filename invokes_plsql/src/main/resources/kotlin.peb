@@ -1,0 +1,293 @@
+package picc.plsql.{{ ps.pkg | javastylename }}
+
+import java.util.*
+import java.math.BigDecimal
+
+import java.sql.Date
+import java.sql.Types
+import java.sql.SQLException
+import java.sql.ResultSet
+
+import org.jdbi.v3.core.Handle
+import org.jdbi.v3.core.Jdbi
+import org.jdbi.v3.core.mapper.RowMapper
+import org.jdbi.v3.core.statement.StatementContext
+
+/* {{ ps.pkg }} */
+object {{ps.name}} {
+
+{% for f in ps.functions %}
+   {%if f.outType != null%}
+
+    {% if f.outType.parameters.size != 0 %}data class {{ f.outType.name }}({% for p in f.outType.parameters %}val {{p.name}}:{{ p.typ }}{% if loop.index < f.outType.parameters.size -1 %}, {% endif %}{% endfor %}){% endif %}
+
+    {%if f.outType.outTypeMappers.size != 0%}
+        private class {{f.outType.name}}Mapper : RowMapper<{{f.outType.name}}> {
+        @Throws(SQLException::class)
+        override fun map(rs: ResultSet, ctx: StatementContext): {{f.outType.name}} {
+            return {{f.outType.name}}({% for v in f.outType.outTypeMappers %}
+                                    rs.get{{ v.typ }}("{{ v.field }}"){% if loop.index < f.outType.outTypeMappers.size -1 %}, {% endif %}
+
+                                {% endfor%}
+                                      )
+        }
+     }
+    {% endif %}
+
+   {% endif %}
+
+    {% if f instanceof "dev.evolution.kt.FunctionSpec"%}
+    fun {{ f.name }}({{ inParametersDefine(f.inParameters) }}jdbi: Jdbi){%if f.outType != null%}:{{ f.outType.name }}{% endif %} {
+        val handle = jdbi.open()
+        try {
+            {% for v in f.variableDeclarations %}
+            var {{ v.name }}:{{ v.typ }} {% if v.value != null%} = {{ v.value }}{% endif%}
+
+            {% endfor %}
+            {{ listStatement(f.block.statements) }}
+        } finally {
+            handle.close()
+        }
+    } //// end {{ f.name }}
+    {% elseif f instanceof "dev.evolution.kt.GetSqlFunctionSpec"%}
+        {{ renderGetSqlFunctionSpec(f) }}
+    {% elseif f instanceof "dev.evolution.kt.QuerySqlFunctionSpec"%}
+        {{ renderQuerySqlFunctionSpec(f) }}
+    {% elseif f instanceof "dev.evolution.kt.UpdateSqlFunctionSpec"%}
+        {{ renderUpdateSqlFunctionSpec(f) }}
+    {% elseif f instanceof "dev.evolution.kt.ProcedureCallSqlFunctionSpec"%}
+        {{ renderProcedureCallSqlFunctionSpec(f)  }}
+    {% elseif f instanceof "dev.evolution.kt.FunctionCallSqlFunctionSpec"%}
+        {{ renderFunctionCallSqlFunctionSpec(f)  }}
+    {% else %}
+        xxx {{ f.name }}  xxx
+    {% endif %}
+{% endfor %}
+
+} //// end {{ps.name}}
+
+
+{% macro renderUpdateSqlFunctionSpec(f) %}
+    private fun {{ f.name }}({{ inParametersDefine(f.inParameters) }}handle:Handle):{{ f.outType.name }} {
+        val sql = """{{ f.sql }}""".trimIndent()
+
+        return handle.createUpdate(sql)
+        {% for p in f.bindParameters %}
+            .bind("{{ p.name }}",{{ p.value }})
+        {% endfor %}
+            .execute()
+      }
+{% endmacro %}
+
+{% macro renderQuerySqlFunctionSpec(f) %}
+    private fun {{ f.name }}({{ inParametersDefine(f.inParameters) }}handle:Handle):{{ f.outType.name }} {
+        val sql = """{{ f.sql }}""".trimIndent()
+
+        return handle.createQuery(sql)
+        {% for p in f.bindParameters %}
+            .bind("{{ p.name }}",{{ p.value }})
+        {% endfor %}
+        {% if f.outType.outTypeMappers.size > 0%}
+            .map({{ f.outType.name }}Mapper())
+        {% else%}
+            .mapTo({{ f.outType.name }}::class.java)
+        {% endif %}
+            .list()
+      }
+{% endmacro %}
+
+
+{% macro renderGetSqlFunctionSpec(f) %}
+    private fun {{ f.name }}({{ inParametersDefine(f.inParameters) }}handle:Handle):{{ f.outType.name }} {
+        val sql = """{{ f.sql }}""".trimIndent()
+
+        return handle.createQuery(sql)
+        {% for p in f.bindParameters %}
+            .bind("{{ p.name }}",{{ p.value }})
+        {% endfor %}
+        {% if f.outType.outTypeMappers.size > 0%}
+            .map({{ f.outType.name }}Mapper())
+        {% else%}
+            .mapTo({{ f.outType.name }}::class.java)
+        {% endif %}
+            .one()
+      }
+{% endmacro %}
+
+
+{% macro  renderFunctionCallSqlFunctionSpec(f) %}
+    private fun {{ f.name }}({{ inParametersDefine(f.inParameters) }}handle:Handle):{{ f.outType.name  }}?{
+        val sql = """:res = call {{ f.sql }} """.trimIndent()
+
+        val outs = handle.createCall(sql)
+        {% for p in f.bindParameters %}
+            .bind("{{ p.name }}",{{ p.value }})
+        {% endfor %}
+            .registerOutParameter("{{ p.name }}",Types.{{ f.sqlType }})
+            .invoke()
+        return outs.getInt("RESULT")
+      }
+{% endmacro %}
+
+{% macro  renderProcedureCallSqlFunctionSpec(f) %}
+    private fun {{ f.name }}({{ inParametersDefine(f.inParameters) }}handle:Handle){% if f.outType != null %}:{{ f.outType.name  }}{% endif %}{
+        val sql = """{{ f.sql }}""".trimIndent()
+
+        val call = handle.createCall(sql)
+        {% for p in f.bindParameters %}
+            .bind("{{ p.name }}",{{ p.value }})
+        {% endfor %}
+        {% for p in f.outParameters %}
+        .registerOutParameter("{{ p.name }}",Types.{{ p.sqlType }})
+        {% endfor %}
+
+        val outs = call.invoke()
+
+        {% for p in f.outParameters %}
+            {% if ("Boolean" == p.javaType and "BOOLEAN" == p.sqlType)%}
+                val {{ p.name | javastylename }} = outs.getInt("{{ p.name }}") > 0
+            {% else %}
+                val {{ p.name | javastylename }} = outs.get{{ p.javaType }}("{{ p.name }}")
+            {% endif %}
+        {% endfor %}
+
+        {% if f.outParameters.size == 0 %}
+
+        {% elseif f.outParameters.size == 1 %}
+           return {{ f.outParameters[0].name | javastylename }}
+        {% elseif f.outParameters.size == 2 %}
+           return Pair(f.outParameters[0].name,f.outParameters[1].name)
+        {% else%}
+           return {{ f.outType.name }}({% for p in f.outParameters %}{{ p.name | javastylename }}{% if loop.index < f.outParameters.size -1 %}, {% endif %}{% endfor %})
+        {% endif %}
+      }
+{% endmacro %}
+
+{% macro listStatement(statements) %}
+{% for s in statements %}
+    {{ oneStatement(s) }}
+{% endfor %}
+{% endmacro %}
+
+{% macro oneStatement(s) %}
+    {% if s instanceof "dev.evolution.kt.AssignVarStatement"%}
+        {{ assignVarStatement(s) }}
+    {% elseif s instanceof "dev.evolution.kt.AssignValStatement"%}
+        {{ assignValStatement(s) }}
+    {% elseif s instanceof "dev.evolution.kt.IfExpression"%}
+        {{ ifExpression(s) }}
+    {% elseif s instanceof "dev.evolution.kt.ReturnStatement"%}
+        return {{ oneStatement(s.v) }}
+    {% elseif s instanceof "dev.evolution.kt.CallFunctionExpression"%}
+        {{ callFunctionExpression(s) }}
+    {% elseif s instanceof "dev.evolution.kt.CallBuildInFunctionExpression"%}
+        {{ callBuildInFunctionExpression(s) }}
+    {% elseif s instanceof "dev.evolution.kt.NewClassExpression"%}
+        {{ newClassExpression(s) }}
+    {% elseif s instanceof "dev.evolution.kt.LoopExpression"%}
+        {{ loopExpression(s) }}
+    {% elseif s instanceof "dev.evolution.kt.ConstExpress"%}
+        {{ s.v }}
+    {% elseif s instanceof "dev.evolution.kt.Comment"%}
+        {{ comment(s) }}
+
+    {% else %}
+        xxx statement: {{ s }} xxx
+    {% endif %}
+{% endmacro %}
+
+{% macro ifExpression(s) %}
+    if({{ oneStatement(s.condition.v) }}) {  //{{ s.p.startLine }}
+
+        {{ listStatement(s.thenPart.statements) }}
+    }
+    {% if s.elseifParts.size > 0 %}
+        {{ listElseIfStatements(s.elseifParts) }}
+    {% endif %}
+    {% if s.elsePart != null %}
+    else { //{{ s.elsePart.p.startLine }} ~ {{ s.elsePart.p.stopLine }}
+
+        {{ listStatement(s.elsePart.statements) }}
+    }
+    {% endif %}
+{% endmacro %}
+
+{% macro listElseIfStatements(statements) %}
+    {% for s in statements %}
+     else if ({{ oneStatement(s.condition.v) }}) { //{{ s.p.startLine }}
+
+        {{ listStatement(s.thenPart.statements) }}
+     }
+    {% endfor %}
+{% endmacro %}
+
+{% macro loopExpression(s) %}
+    {% if s.loopVariable != null%}
+        for({{ s.loopVariable.variable }} in {{ callFunctionExpression(s.loopVariable.call) }}) { //{{ s.block.p.startLine }} ~ {{ s.block.p.stopLine }}
+    {% else %}
+        for { //{{ s.block.p.startLine }} ~ {{ s.block.p.stopLine }}
+    {% endif%}
+
+        {{ listStatement(s.block.statements) }}
+    } //// end loop
+{% endmacro %}
+
+{% macro newClassExpression(s) %}
+{{ s.typ }}({% for p in s.parameters %}{{p}}{% if loop.index < s.parameters.size -1%},{%endif%}{% endfor %})
+{% endmacro %}
+
+{% macro assignVarStatement(s) %}
+    {% if s.ve instanceof "dev.evolution.kt.CallFunctionExpression"%}
+    // {{ s.ve.p.startLine }}~{{ s.ve.p.stopLine }}
+
+    {{ s.name }} = {{ callFunctionExpression(s.ve) }}
+    {% elseif s.ve instanceof "dev.evolution.kt.CallBuildInFunctionExpression"%}
+    // {{ s.ve.p.startLine }}
+
+    val {{ s.name }} = {{ callBuildInFunctionExpression(s.ve) }}
+    {% elseif s.ve instanceof "dev.evolution.kt.ConstExpress"%}
+    {{ s.name }} = {{ s.ve.v }}
+
+    {% else %}
+    xxx AssigeStatement: {{ s }} xxx
+    {% endif %}
+{% endmacro %}
+
+{% macro assignValStatement(s) %}
+    {% if s.ve instanceof "dev.evolution.kt.CallFunctionExpression"%}
+    // {{ s.ve.p.startLine }}
+
+    val {{ s.name }} = {{ callFunctionExpression(s.ve) }}
+    {% elseif s.ve instanceof "dev.evolution.kt.CallBuildInFunctionExpression"%}
+    // {{ s.ve.p.startLine }}
+
+    val {{ s.name }} = {{ callBuildInFunctionExpression(s.ve) }}
+    {% elseif s.ve instanceof "dev.evolution.kt.ConstExpress"%}
+    val {{ s.name }} = {{ s.ve.v }}
+
+    {% else %}
+    xxx AssigeStatement: {{ s }} xxx
+    {% endif %}
+{% endmacro %}
+{% macro comment(c)%}
+    {% if c.text.startsWith("/*") %}
+       {{ c.text }}
+    {% else %}
+       //{{ c.text }}
+    {% endif %}
+
+{% endmacro %}
+{% macro callFunctionExpression(f) %}
+{{ f.funName }}({{ callParameters(f.parameters) }},handle)
+{% endmacro %}
+{% macro callBuildInFunctionExpression(f) %}
+{{ f.funName }}({{ callParameters(f.parameters) }})
+{% endmacro %}
+
+{% macro callParameters(parameters) %}
+{% for p in parameters %}{{p}}{% if loop.index < parameters.size - 1 %},{%endif%}{% endfor %}
+{% endmacro %}
+
+{% macro inParametersDefine(parameters) %}
+ {% for p in parameters %}{{p.name}}:{{ p.typ }},{% endfor %}
+{% endmacro %}

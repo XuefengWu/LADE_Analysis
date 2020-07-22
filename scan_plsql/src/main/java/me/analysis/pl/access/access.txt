@@ -1,0 +1,3 @@
+invoke:call
+read: select
+write: insert,update,delete
